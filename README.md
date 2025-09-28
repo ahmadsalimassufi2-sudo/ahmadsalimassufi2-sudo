@@ -3,39 +3,43 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WA Logo Link Generator</title>
+<title>WA Logo Link Generator Multi</title>
 <style>
   body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f2f2f2; }
   h1 { color: #075e54; }
-  input { padding: 10px; width: 60%; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; }
+  textarea { padding: 10px; width: 80%; height: 120px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ccc; resize: vertical; }
   button { padding: 10px 20px; margin-top: 10px; border-radius: 5px; border: none; background: #25D366; color: white; cursor: pointer; }
   button:hover { background: #128C7E; }
-  #resultContainer { margin-top: 20px; display: none; }
-  #resultLink { display: block; padding: 10px; background: white; border: 1px solid #ccc; border-radius: 5px; text-decoration: none; color: #075e54; word-break: break-all; }
-  #copyBtn { margin-top: 10px; padding: 8px 15px; border-radius: 5px; border: none; background: #128C7E; color: white; cursor: pointer; }
-  #copyBtn:hover { background: #075E54; }
+  .resultContainer { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
+  .linkBox { background: white; padding: 10px; margin: 5px; border-radius: 5px; width: 80%; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ccc; }
+  .linkBox a { word-break: break-all; color: #075e54; text-decoration: none; flex: 1; margin-right: 10px; }
+  .copyBtn { padding: 5px 10px; border-radius: 5px; border: none; background: #128C7E; color: white; cursor: pointer; }
+  .copyBtn:hover { background: #075E54; }
+  #copyAllBtn { margin-top: 10px; background: #075E54; }
+  #copyAllBtn:hover { background: #128C7E; }
 </style>
 </head>
 <body>
 
-<h1>WA Logo Link Generator</h1>
-<p>Masukkan link tujuan:</p>
-<input type="text" id="targetUrl" placeholder="https://example.com">
+<h1>WA Logo Link Generator Multi</h1>
+<p>Masukkan satu atau banyak link (satu link per baris):</p>
+<textarea id="targetUrls" placeholder="https://example.com&#10;https://google.com"></textarea>
 <br>
-<button onclick="generateLink()">Buat Link dengan Logo WA</button>
+<button onclick="generateLinks()">Buat Semua Link dengan Logo WA</button>
 
-<div id="resultContainer">
-    <a id="resultLink" href="#" target="_blank">Link Hasil Shorten</a>
-    <button id="copyBtn" onclick="copyLink()">Copy Link</button>
-</div>
+<div class="resultContainer" id="resultContainer"></div>
+<button id="copyAllBtn" style="display:none;" onclick="copyAllLinks()">Copy Semua Link</button>
 
 <script>
-function generateLink() {
-    const target = document.getElementById('targetUrl').value;
-    if (!target) { alert("Masukkan link dulu!"); return; }
+function generateLinks() {
+    const textarea = document.getElementById('targetUrls');
+    const lines = textarea.value.split('\n').map(l => l.trim()).filter(l => l !== '');
+    const container = document.getElementById('resultContainer');
+    container.innerHTML = ''; // clear previous
+    if (lines.length === 0) { alert("Masukkan minimal satu link!"); return; }
 
-    // Buat redirect.html dinamis dengan OG WA
-    const redirectHTML = `
+    lines.forEach(target => {
+        const redirectHTML = `
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -53,27 +57,38 @@ function generateLink() {
 </html>
 `;
 
-    // Simpan sebagai blob (sementara)
-    const blob = new Blob([redirectHTML], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
+        const blob = new Blob([redirectHTML], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
 
-    // Tampilkan link hasil shorten
-    const resultContainer = document.getElementById('resultContainer');
-    const resultLink = document.getElementById('resultLink');
-    const copyBtn = document.getElementById('copyBtn');
+        // Buat tampilan link box
+        const box = document.createElement('div');
+        box.className = 'linkBox';
 
-    resultLink.href = url;
-    resultLink.textContent = url;
-    copyBtn.dataset.link = url;
+        const linkEl = document.createElement('a');
+        linkEl.href = url;
+        linkEl.target = '_blank';
+        linkEl.textContent = url;
 
-    resultContainer.style.display = "block";
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'copyBtn';
+        copyBtn.textContent = 'Copy';
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(url).then(() => alert("Link berhasil disalin!"));
+        };
+
+        box.appendChild(linkEl);
+        box.appendChild(copyBtn);
+        container.appendChild(box);
+    });
+
+    // Tampilkan tombol copy semua
+    document.getElementById('copyAllBtn').style.display = 'inline-block';
 }
 
-function copyLink() {
-    const copyBtn = document.getElementById('copyBtn');
-    const link = copyBtn.dataset.link;
-    navigator.clipboard.writeText(link)
-      .then(() => alert("Link berhasil disalin!"))
+function copyAllLinks() {
+    const links = Array.from(document.querySelectorAll('.linkBox a')).map(a => a.href).join('\n');
+    navigator.clipboard.writeText(links)
+      .then(() => alert("Semua link berhasil disalin!"))
       .catch(() => alert("Gagal menyalin link."));
 }
 </script>
